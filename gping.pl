@@ -1,8 +1,8 @@
 #!/usr/bin/perl
-# Console histogram visualization for ping, v.0.7.2
+# Console histogram visualization for ping, v.0.7.3
 #
 #The MIT License (MIT)
-#Copyright (c) 2015 S-NT (https://github.com/S-NT/scripts)
+#Copyright (c) 2015 S-NT  (https://github.com/S-NT/scripts)
 #
 #Permission is hereby granted, free of charge, to any person obtaining a copy
 #of this software and associated documentation files (the "Software"), to deal
@@ -74,7 +74,8 @@ while ( defined(my $ping_line = <$PING>) ){
       $stable_ping = 0;
     }
     else {
-      $blocks = int( $latency * $max_blocks / $max_latency + 1 );
+      $blocks = int( $latency * $max_blocks / $max_latency );
+      $blocks = 1 if ( $blocks == 0 );
       if ( $latency <= ($max_latency*$threshold/100) ){
         $stable_ping += 1; 
       }
