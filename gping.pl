@@ -1,8 +1,8 @@
 #!/usr/bin/perl
-# Console histogram visualization for ping, v.0.7.1
+# Console histogram visualization for ping, v.0.7.2
 #
 #The MIT License (MIT)
-#Copyright (c) 2015 S-NT
+#Copyright (c) 2015 S-NT (https://github.com/S-NT/scripts)
 #
 #Permission is hereby granted, free of charge, to any person obtaining a copy
 #of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +24,14 @@
 
 use strict;
 use warnings;
-#use v5.10;
+use v5.10;
 
 $SIG{QUIT} = sub { my $dummy = "ignore" };
 $SIG{INT} = \&handle_SIGINT;
 
 my $ping_c = "/usr/bin/ping";
-die "$ping_c not found: $!" unless -e "/usr/bin/ping";
+$ping_c = "/bin/ping" unless (-e "$ping_c");
+die "$ping_c not found: $!" unless (-e "$ping_c");
 
 unless (@ARGV) {
   print "SYNTAX:\n\tgping.pl <host|ip-adress>\n\t^\\\tshow stats\n\t^C\tshow stats and exit\n";
