@@ -1,4 +1,5 @@
 Various small scripts and tools
 
-* gping.pl - Console histogram visualization for ping
-* ttr.sh   - Tiny 'Unix Time' to 'Date' translation tool
+* gping.pl   - Console histogram visualization for ping
+* ttr.sh     - Tiny 'Unix Time' to 'Date' translation tool
+* passgen.sh - Simple password generator
