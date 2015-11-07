@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Console histogram visualization for ping, v.0.7.3
+# Console histogram visualization for ping, v.0.8.1
 #
 #The MIT License (MIT)
 #Copyright (c) 2015 S-NT  (https://github.com/S-NT/scripts)
@@ -106,7 +106,8 @@ while ( defined(my $ping_line = <$PING>) ){
     }
 
     if ( ($last_packet_num + 1) < $packet_count ){
-      print "-\t\e[31m\?\tpacket loss\e[0m\n";
+      my $packet_loss = ( $packet_count - $last_packet_num - 1 );
+      print "-\t\e[31m\?\tpacket loss ($packet_loss)\e[0m\n";
       $stable_ping = 0;
     }
     $last_packet_num = $packet_count;
