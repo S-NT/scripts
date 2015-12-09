@@ -4,3 +4,4 @@ Various small scripts and tools
 * ttr.sh     - Tiny 'Unix Time' to 'Date' translation tool
 * passgen.sh - Simple password generator
 * shells.pl  - Analysis of user shell accounts
+* sdu.sh     - Small tool for searching largest files and directories
