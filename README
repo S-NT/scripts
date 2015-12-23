@@ -5,3 +5,4 @@ Various small scripts and tools
 * passgen.sh - Simple password generator
 * shells.pl  - Analysis of user shell accounts
 * sdu.sh     - Small tool for searching largest files and directories
+* bsa.pl     - Brief system analysis tool (free space, TOP-n of CPU/MEM consuming processes, long running cron jobs, etc)
