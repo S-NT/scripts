@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Brief system analysis, v.0.5.3
+# Brief system analysis, v.0.5.4
 #
 #The MIT License (MIT)
 #Copyright (c) 2015 S-NT  (https://github.com/S-NT/scripts)
@@ -106,7 +106,7 @@ my @crond_pids;
 my @cron_jobs;
 my @zombies;
 
-open(my $PS, "$ps_sys axo euser,pid,ppid,pcpu,pmem,tname,state,time,etime,args --sort -pcpu,-time |");
+open(my $PS, "$ps_sys axo euser,pid,ppid,pcpu,pmem,tname,state,time,etime,args --sort -time,-pcpu |");
 
 print "\n\n  TOP-$ps_cpu_top of CPU consumption:\n\n";
 while ( defined(my $line = <$PS>) ){
