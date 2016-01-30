@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Brief system analysis, v.0.5.4a
+# Brief system analysis, v.0.5.5
 #
 #The MIT License (MIT)
 #Copyright (c) 2015 S-NT  (https://github.com/S-NT/scripts)
@@ -24,10 +24,11 @@
 
 use warnings;
 use strict;
-use v5.10;
-#use v5.8;
+#use v5.10;
+use v5.8;
 
 # Global settings:
+
 my $terminal_lang = 'LANG=en_US';
 # How many items CPU/MEM Top should contain
 my $ps_cpu_top = 10;
@@ -83,9 +84,35 @@ sub etime2seconds {
   return ( ${days}*24*3600 + ${hours}*3600 + ${minutes}*60 + $seconds);
 }
 
+# Subroutine, used for sorting pairs of arrays with ps data
+sub sort_array_data {
+  my ( $a_values, $a_lines, $current_value, $line, $top_size ) = @_;
+  for my $index ( reverse(1 .. $#{ $a_values }) ){
+    if ( $current_value > ${ $a_values }[$index] ){
+      if ( $index < $top_size ){
+        ${ $a_values }[($index + 1)] = ${ $a_values }[$index];
+        ${ $a_lines }[($index + 1)]  = ${ $a_lines }[$index];
+        ${ $a_values }[$index] = $current_value;
+        ${ $a_lines }[$index]  = $line;
+      }
+      else{
+        ${ $a_values }[$index] = $current_value;
+        ${ $a_lines }[$index]  = $line;
+      }
+    }
+    else{
+      if ( $index < $top_size ){
+        ${ $a_values }[($index + 1)] = $current_value;
+        ${ $a_lines }[($index + 1)]  = $line;
+      }
+      last;
+    }
+  }
+}
 
 
 # Checking for the filesystems with low free space
+
 find_path( \$df_sys );
 my @df_data;
 # Workaround for lines with too long named devices
@@ -123,6 +150,7 @@ if ( @df_data > 1 ){
 
 
 # Checking for 'hungry' processes: CPU and MEM
+
 find_path( \$ps_sys );
 my @cpu_values;
 my @cpu_lines;
@@ -134,28 +162,46 @@ my @crond_pids;
 my @cron_jobs;
 my @zombies;
 
-#open(my $PS, "$ps_sys axo euser,pid,ppid,pcpu,pmem,tname,state,time,etime,args --sort -time,-pcpu |");
 open(my $PS, "$ps_sys axo euser,pid,ppid,pcpu,pmem,tname,state,time,etime,args |");
 
-print "\n\n  TOP-$ps_cpu_top of CPU consumption:\n\n";
 while ( defined(my $line = <$PS>) ){
   chomp $line;
-  # Displaying CPU Top right now
-  print "$line\n" if ( $. <= ($ps_cpu_top + 1) );
-  # Adding the ps header to other stat categories
+  # Adding the ps header to every stat category
   if ( $. == 1 ){
     push(@cron_jobs, $line);
     push(@zombies, $line);
+    @cpu_values = ( 0 );
+    @cpu_lines = ( $line );
     @mem_values = ( 0 );
     @mem_lines = ( $line );
     next;
   }
-  # Using two arrays for manual sorting of ps output, because
-  # older versions of ps cannot sort output by MEM usage:
+  # Using two pairs of arrays for manual sorting of ps output,
+  # because older versions of ps cannot sort output by CPUtime
+  # or MEM usage:
+  #   @cpu_values atm contains current sorted CPUtime values
+  # (in seconds)
+  #   @cpu_lines atm contains corresponding ps lines
+  #
   #   @mem_values atm contains current sorted memory values
   #   @mem_lines atm contains corresponding ps lines
-  # Size of each array is strictly limited to $ps_mem_top elements
-  if ( $line =~ /\A\w+\s+(\d+\s+){2}[\d.]+\s+([\d.]+)\s+[\w?\/]+\s+\w\s+([\d\:-]+\s+){2}.+\z/ ){
+  # Size of each array is strictly limited to $ps_cpu_top or
+  # to $ps_mem_top elements respectively
+
+  # Populating and sorting arrays for CPU-Top
+  if ( $line =~ /\A(\S+\s+){7}([\d\:-]+)\s+\S.+\z/ ){
+    my $lines_stored = @cpu_values;
+    my $current_value = etime2seconds($2);
+    if ($lines_stored == 1){
+      $cpu_values[$lines_stored] = $current_value;
+      $cpu_lines[$lines_stored]  = $line;
+    }
+    else{
+      sort_array_data( \@cpu_values, \@cpu_lines, $current_value, $line, $ps_cpu_top );
+    }
+  }
+  # Populating and sorting arrays for MEM-Top
+  if ( $line =~ /\A(\S+\s+){4}([\d.]+)\s+\S.+\z/ ){
     my $lines_stored = @mem_values;
     my $current_value = $2;
     if ($lines_stored == 1){
@@ -163,27 +209,7 @@ while ( defined(my $line = <$PS>) ){
       $mem_lines[$lines_stored]  = $line;
     }
     else{
-      for my $index ( reverse(1 .. $#mem_values) ){
-        if ( $current_value > $mem_values[$index] ){
-          if ( $index < ($ps_mem_top - 1) ){
-            $mem_values[($index + 1)] = $mem_values[$index];
-            $mem_lines[($index + 1)]  = $mem_lines[$index];
-            $mem_values[$index] = $current_value;
-            $mem_lines[$index]  = $line;
-          }
-          else{
-            $mem_values[$index] = $current_value;
-            $mem_lines[$index]  = $line;
-          }
-        }
-        else{
-          if ( $index < ($ps_mem_top - 1) ){
-            $mem_values[($index + 1)] = $current_value;
-            $mem_lines[($index + 1)]  = $line;
-          }
-          last;
-        }
-      }
+      sort_array_data( \@mem_values, \@mem_lines, $current_value, $line, $ps_mem_top );
     }
   }
   # Populating @cron_data array
@@ -200,6 +226,8 @@ while ( defined(my $line = <$PS>) ){
 
 close($PS);
 
+print "\n\n  TOP-$ps_cpu_top of CPU consumption:\n\n";
+print "$_\n" for (@cpu_lines);
 
 print "\n\n  TOP-$ps_mem_top of memory consumption:\n\n";
 print "$_\n" for (@mem_lines);
@@ -256,6 +284,7 @@ if (@cron_jobs > 1){
 
 
 # Printing @zombies array, if we've got any data
+
 if (@zombies > 1){
   my $amount = (@zombies - 1);
   print "\n\n  (!) $amount zombie process(es) found:\n\n";
