@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Brief system analysis, v.0.5.4
+# Brief system analysis, v.0.5.4a
 #
 #The MIT License (MIT)
 #Copyright (c) 2015 S-NT  (https://github.com/S-NT/scripts)
@@ -24,8 +24,8 @@
 
 use warnings;
 use strict;
-#use v5.10;
-use v5.8;
+use v5.10;
+#use v5.8;
 
 # Global settings:
 my $terminal_lang = 'LANG=en_US';
@@ -46,6 +46,9 @@ my $crond_sys = '/usr/sbin/crond';
 $crond_sys = '/usr/sbin/cron' unless ( -e $crond_sys );
 undef $crond_sys unless ( -e $crond_sys );
 
+
+# Functions
+
 sub find_path {
   my $utility = shift;
   my @paths = qw( /usr/bin/ /bin/ );
@@ -57,6 +60,29 @@ sub find_path {
   }
   die "(x) Cannot find ${ $utility }: $!";
 }
+
+# Subroutine for converting elapsed time from [[DD-]hh:]mm:ss format
+# to seconds
+sub etime2seconds {
+  my $elapsed_time = shift;
+  my $days = 0;
+  my ( $hours, $minutes, $seconds );
+  if ( $elapsed_time =~ /\A(\d+)-/ ){
+    $days = $1 ;
+  }
+  if ($elapsed_time =~ /(\d+):(\d+):(\d+)\z/ ){
+    ( $hours, $minutes, $seconds ) = ($1, $2, $3);
+  }
+  elsif ($elapsed_time =~ /(\d+):(\d+)\z/ ){
+    ( $hours, $minutes, $seconds ) = (0, $1, $2);
+  }
+  else {
+    print "(?) Something wrong with 'etime' format: ($elapsed_time)\n";
+    return -1;
+  }
+  return ( ${days}*24*3600 + ${hours}*3600 + ${minutes}*60 + $seconds);
+}
+
 
 
 # Checking for the filesystems with low free space
@@ -98,6 +124,8 @@ if ( @df_data > 1 ){
 
 # Checking for 'hungry' processes: CPU and MEM
 find_path( \$ps_sys );
+my @cpu_values;
+my @cpu_lines;
 my @mem_values;
 my @mem_lines;
 
@@ -106,7 +134,8 @@ my @crond_pids;
 my @cron_jobs;
 my @zombies;
 
-open(my $PS, "$ps_sys axo euser,pid,ppid,pcpu,pmem,tname,state,time,etime,args --sort -time,-pcpu |");
+#open(my $PS, "$ps_sys axo euser,pid,ppid,pcpu,pmem,tname,state,time,etime,args --sort -time,-pcpu |");
+open(my $PS, "$ps_sys axo euser,pid,ppid,pcpu,pmem,tname,state,time,etime,args |");
 
 print "\n\n  TOP-$ps_cpu_top of CPU consumption:\n\n";
 while ( defined(my $line = <$PS>) ){
@@ -190,24 +219,8 @@ sub find_cron_jobs {
     if ( $line =~ /\A\S+\s+\d+\s+(${search_pattern})\s+(\S+\s+){5}([\d:-]+)\s+.+\z/ ){
       my $elapsed_time = $3;
 
-      # Converting elapsed time from [[DD-]hh:]mm:ss format to seconds
-      my $days = 0;
-      my ( $hours, $minutes, $seconds );
-      if ( $elapsed_time =~ /\A(\d+)-/ ){
-        $days = $1 ;
-      }
-      if ($elapsed_time =~ /(\d+):(\d+):(\d+)\z/ ){
-        ( $hours, $minutes, $seconds ) = ($1, $2, $3);
-      }
-      elsif ($elapsed_time =~ /(\d+):(\d+)\z/ ){
-        ( $hours, $minutes, $seconds ) = (0, $1, $2);
-      }
-      else {
-        print "(?) Something wrong with 'etime' format\n";
-        next;
-      }
-      my $elapsed_seconds = ( ${days}*24*3600 + ${hours}*3600 + ${minutes}*60 + $seconds);
-      # End of the conversion block
+      my $elapsed_seconds = etime2seconds($elapsed_time);
+      next if ($elapsed_seconds == -1 );
 
       my $threshold = $cron_threshold;
       # Converting threshold to seconds if minutes are used
