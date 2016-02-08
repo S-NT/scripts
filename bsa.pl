@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Brief system analysis, v.0.5.5
+# Brief system analysis, v.0.5.6
 #
 #The MIT License (MIT)
 #Copyright (c) 2015 S-NT  (https://github.com/S-NT/scripts)
@@ -42,6 +42,7 @@ my $cron_threshold = '30m';
 # External utilities:
 my $df_sys = 'df';
 my $ps_sys = 'ps';
+my $uptime_sys = '/usr/bin/uptime';
 # crond binary can be named as either 'crond' or 'cron'
 my $crond_sys = '/usr/sbin/crond';
 $crond_sys = '/usr/sbin/cron' unless ( -e $crond_sys );
@@ -111,6 +112,17 @@ sub sort_array_data {
 }
 
 
+# Show current uptime
+
+print "\n  Uptime info:\n\n";
+if ( -x $uptime_sys ){
+  system("$terminal_lang $uptime_sys");
+}
+else{
+  print "(x) Cannot execute ${uptime_sys}: $!";
+}
+
+
 # Checking for the filesystems with low free space
 
 find_path( \$df_sys );
@@ -144,7 +156,7 @@ while ( defined(my $line = <$DF>) ){
 close($DF);
 
 if ( @df_data > 1 ){
-  print "\n  (!) Filesystems with more than ${df_threshold}% of used space:\n\n";
+  print "\n\n  (!) Filesystems with more than ${df_threshold}% of used space:\n\n";
   print "$_\n" for (@df_data);
 }
 
@@ -268,7 +280,7 @@ if ( defined($crond_sys) ){
     }
 }
 else{
-  print "(!) Cannot find crond binary: cron stats would be unavailable\n";
+  print "(x) Cannot find crond binary: cron stats would be unavailable\n";
 }
 
 # Printing @cron_jobs if there any data
