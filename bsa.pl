@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Brief system analysis, v.0.5.6
+# Brief system analysis, v.0.5.7
 #
 #The MIT License (MIT)
 #Copyright (c) 2015 S-NT  (https://github.com/S-NT/scripts)
@@ -35,6 +35,8 @@ my $ps_cpu_top = 10;
 my $ps_mem_top = 10;
 # Notify, if used space for any local filesystem reached next threshold (in percent)
 my $df_threshold = 85;
+# Notify, if any local filesystem reached the threshold of used inodes (in percent)
+my $inode_threshold = 50;
 # Notify, if there any cron job running for more than $cron_threshold seconds (N)
 # or minutes ('Nm')
 my $cron_threshold = '30m';
@@ -157,6 +159,44 @@ close($DF);
 
 if ( @df_data > 1 ){
   print "\n\n  (!) Filesystems with more than ${df_threshold}% of used space:\n\n";
+  print "$_\n" for (@df_data);
+}
+
+
+# Checking for the filesystems with high inode usage
+
+undef @df_data;
+# Workaround for lines with too long named devices
+undef $broken_line;
+undef $DF;
+
+open($DF, "$terminal_lang $df_sys -Thi |");
+
+while ( defined(my $line = <$DF>) ){
+  chomp $line;
+  if ( $. == 1 ){
+    push(@df_data, $line);
+    next;
+  }
+  my $used_inodes = $line;
+  if ( $used_inodes =~ /.+\s(\d+)%\s.+/ ){
+    $used_inodes = $1;
+    if ( defined($broken_line) ){
+      $line =~ s/\A\s+/ /;
+      $line = $broken_line . " " . $line;
+      undef $broken_line;
+    }
+    push(@df_data, $line) if ( $used_inodes >= $inode_threshold );
+  }
+  else{
+    $broken_line = $line;
+  }
+}
+
+close($DF);
+
+if ( @df_data > 1 ){
+  print "\n\n  (!) Filesystems with more than ${inode_threshold}% of used inodes:\n\n";
   print "$_\n" for (@df_data);
 }
 
