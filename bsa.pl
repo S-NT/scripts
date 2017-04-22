@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Brief system analysis, v.0.5.7
+# Brief system analysis, v.0.5.8
 #
 #The MIT License (MIT)
 #Copyright (c) 2015 S-NT  (https://github.com/S-NT/scripts)
@@ -35,7 +35,7 @@ my $ps_cpu_top = 10;
 my $ps_mem_top = 10;
 # Notify, if used space for any local filesystem reached next threshold (in percent)
 my $df_threshold = 85;
-# Notify, if any local filesystem reached the threshold of used inodes (in percent)
+# Notify, if any local filesystem reaches the threshold of used inodes (in percent)
 my $inode_threshold = 50;
 # Notify, if there any cron job running for more than $cron_threshold seconds (N)
 # or minutes ('Nm')
@@ -166,9 +166,9 @@ if ( @df_data > 1 ){
 # Checking for the filesystems with high inode usage
 
 undef @df_data;
+undef $DF;
 # Workaround for lines with too long named devices
 undef $broken_line;
-undef $DF;
 
 open($DF, "$terminal_lang $df_sys -Thi |");
 
