@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Console histogram visualization for ping, v.0.8.1
+# Console histogram visualization for ping, v.0.8.2
 #
 #The MIT License (MIT)
 #Copyright (c) 2015 S-NT  (https://github.com/S-NT/scripts)
@@ -47,6 +47,7 @@ my $threshold=30;
 # Inits
 my $stable_ping=0;
 my $last_packet_num=0;
+my $max_latency_color=0;
 # Graph width, default is 52
 my $max_blocks=52;
 # Default block's icon is '-'
@@ -72,10 +73,12 @@ while ( defined(my $ping_line = <$PING>) ){
       $max_latency = $latency;
       $blocks = $max_blocks;
       $stable_ping = 0;
+      $max_latency_color = 31;
     }
     else {
       $blocks = int( $latency * $max_blocks / $max_latency );
       $blocks = 1 if ( $blocks == 0 );
+      $max_latency_color = 0;
       if ( $latency <= ($max_latency*$threshold/100) ){
         $stable_ping += 1; 
       }
@@ -113,7 +116,7 @@ while ( defined(my $ping_line = <$PING>) ){
     $last_packet_num = $packet_count;
 
     my $graph_line = $block_icon x $blocks . " " x ( $max_blocks - $blocks );
-    print "$packet_count\t$latency\t\e[${graph_color}m$graph_line\e[0m  $max_latency\n";
+    print "$packet_count\t$latency\t\e[${graph_color}m$graph_line\e[0m  \e[${max_latency_color}m$max_latency\e[0m\n";
   }
   else {
     print $ping_line . "\n";
