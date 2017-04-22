@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Console histogram visualization for ping, v.0.8.2
+# Console histogram visualization for ping, v.0.8.3
 #
 #The MIT License (MIT)
 #Copyright (c) 2015 S-NT  (https://github.com/S-NT/scripts)
@@ -90,6 +90,7 @@ while ( defined(my $ping_line = <$PING>) ){
       $max_latency = int( $max_latency * 0.8 );
       $stable_ping = 0;
       $graph_color = 37;
+      $max_latency_color = 32;
     }
 
     unless ($graph_color){
