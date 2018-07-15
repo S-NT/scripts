@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Console histogram visualization for ping, v.0.8.3
+# Console histogram visualization for ping, v.0.8.4
 #
 #The MIT License (MIT)
 #Copyright (c) 2015 S-NT  (https://github.com/S-NT/scripts)
@@ -50,8 +50,8 @@ my $last_packet_num=0;
 my $max_latency_color=0;
 # Graph width, default is 52
 my $max_blocks=52;
-# Default block's icon is '-'
-my $block_icon='-';
+# Default block's icon is '_'
+my $block_icon='_';
 
 my $ping_pid = open(my $PING, "$ping_c $ping_params |") or die "Cannot start ping: $!";
 
