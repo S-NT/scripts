@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Console histogram visualization for ping, v.0.8.4
+# Console histogram visualization for ping, v.0.9.3
 #
 #The MIT License (MIT)
 #Copyright (c) 2015 S-NT  (https://github.com/S-NT/scripts)
@@ -34,7 +34,7 @@ $ping_c = "/bin/ping" unless (-e "$ping_c");
 die "$ping_c not found: $!" unless (-e "$ping_c");
 
 unless (@ARGV) {
-  print "SYNTAX:\n\tgping.pl <host|ip-adress>\n\t^\\\tshow stats\n\t^C\tshow stats and exit\n";
+  print "SYNTAX:\n\tvping.pl <host|ip-adress>\n\t^\\\tshow stats\n\t^C\tshow stats and exit\n";
   exit 0;
 }
 
@@ -44,6 +44,10 @@ my $ping_params = join(" ",  @ARGV);
 my $max_latency=50;
 # Stable ping threshold, concerning the current $max_latency value, in percent
 my $threshold=30;
+# Latency thresholds in milliseconds
+my $minimal_latency=3;
+my $low_latency=15;
+my $medium_latency=35;
 # Inits
 my $stable_ping=0;
 my $last_packet_num=0;
@@ -80,13 +84,13 @@ while ( defined(my $ping_line = <$PING>) ){
       $blocks = 1 if ( $blocks == 0 );
       $max_latency_color = 0;
       if ( $latency <= ($max_latency*$threshold/100) ){
-        $stable_ping += 1; 
+        $stable_ping += 1;
       }
       else { $stable_ping = 0; }
     }
 
     # Decreasing the $max_latency by 20% if last 30 packets haven't exceeded the $threshold
-    if ( $stable_ping == 30 ){
+    if ( $stable_ping == 30 && $max_latency > 5 ){
       $max_latency = int( $max_latency * 0.8 );
       $stable_ping = 0;
       $graph_color = 37;
@@ -94,14 +98,13 @@ while ( defined(my $ping_line = <$PING>) ){
     }
 
     unless ($graph_color){
-      my $blocks_percent = int( $latency*100/$max_latency );
-      if ( $blocks_percent <= 25 ){
-        $graph_color = 35;
+      if ( $latency <= $minimal_latency ){
+        $graph_color = 36;
       }
-      elsif ( $blocks_percent <= 45 ){
+      elsif ( $latency <= $low_latency ){
         $graph_color = 32;
       }
-      elsif ( $blocks_percent <= 75 ){
+      elsif ( $latency <= $medium_latency ){
         $graph_color = 33;
       }
       else {
@@ -117,7 +120,7 @@ while ( defined(my $ping_line = <$PING>) ){
     $last_packet_num = $packet_count;
 
     my $graph_line = $block_icon x $blocks . " " x ( $max_blocks - $blocks );
-    print "$packet_count\t$latency\t\e[${graph_color}m$graph_line\e[0m  \e[${max_latency_color}m$max_latency\e[0m\n";
+    print "$packet_count\t$latency\t\e[${graph_color}m$graph_line\e[0m \e[${max_latency_color}m$max_latency\e[0m\n";
   }
   else {
     print $ping_line . "\n";
